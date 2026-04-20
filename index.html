@@ -207,7 +207,7 @@ textarea { overflow-y: hidden; }
     </div>
     <div class="card">
       <label for="orig-text">原始文本</label>
-      <textarea id="orig-text" placeholder="粘贴要加水印的文本..." oninput="autoResize(this); scheduleGenerate()"></textarea>
+      <textarea id="orig-text" placeholder="粘贴要加水印的文本..." oninput="autoResize(this); scheduleGenerate()" onpaste="setTimeout(()=>{autoResize(this);scheduleGenerate();},50)"></textarea>
     </div>
 
     <div class="card">
