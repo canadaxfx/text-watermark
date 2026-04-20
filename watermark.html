@@ -207,7 +207,8 @@ textarea { overflow-y: hidden; }
     </div>
     <div class="card">
       <label for="orig-text">原始文本</label>
-      <textarea id="orig-text" placeholder="粘贴要加水印的文本..." oninput="autoResize(this); scheduleGenerate()" onpaste="setTimeout(()=>{autoResize(this);scheduleGenerate();},50)"></textarea>
+      <textarea id="orig-text" placeholder="粘贴要加水印的文本..." oninput="autoResize(this); scheduleGenerate()"></textarea>
+      <div class="hint" style="margin-top:4px">请同时填写下方的水印标识，结果才会自动生成</div>
     </div>
 
     <div class="card">
