@@ -141,6 +141,12 @@ select {
   font-size: 0.9em; font-weight: 600; padding: 0; font-family: inherit;
 }
 .settings-toggle:hover { color: #3a7bc8; }
+.clear-btn {
+  background: none; border: none; color: #bbb; cursor: pointer;
+  font-size: 0.78em; font-family: inherit; padding: 0; margin-left: 6px;
+  vertical-align: middle;
+}
+.clear-btn:hover { color: #d9534f; }
 textarea { overflow-y: hidden; }
 .help-link {
   display: block; text-align: center; margin-bottom: 14px;
@@ -206,7 +212,7 @@ textarea { overflow-y: hidden; }
       * 可将水印文本渲染为图片并自动下载，作为原创证据存档。如需更可信的时间证明，发布后在评论区补发一条含时间的截图。
     </div>
     <div class="card">
-      <label for="orig-text">原始文本</label>
+      <label for="orig-text">原始文本 <button class="clear-btn" onclick="clearField('orig-text')">✕ 清除</button></label>
       <textarea id="orig-text" placeholder="粘贴要加水印的文本..." oninput="autoResize(this); scheduleGenerate()"></textarea>
       <div class="hint" style="margin-top:4px">请同时填写下方的水印标识，结果才会自动生成</div>
     </div>
@@ -306,7 +312,7 @@ textarea { overflow-y: hidden; }
       将可疑文字粘贴到下方，检测是否含有本工具生成的水印标识，并提取标识内容。同时检测括号标记和不可见零宽字符两层水印。
     </div>
     <div class="card">
-      <label for="verify-text">待检测文本</label>
+      <label for="verify-text">待检测文本 <button class="clear-btn" onclick="clearField('verify-text')">✕ 清除</button></label>
       <textarea id="verify-text" placeholder="粘贴可疑文本..." oninput="autoResize(this)"></textarea>
     </div>
     <button class="btn btn-primary" onclick="verifyWatermark()">检测水印</button>
@@ -326,7 +332,7 @@ textarea { overflow-y: hidden; }
       * 水印图片作为原创证据存档。如需更可信的时间证明，发布后在评论区补发一条含时间的截图。
     </div>
     <div class="card">
-      <label for="img-text">文本内容</label>
+      <label for="img-text">文本内容 <button class="clear-btn" onclick="clearField('img-text')">✕ 清除</button></label>
       <textarea id="img-text" placeholder="粘贴文本..." style="min-height:140px" oninput="autoResize(this)"></textarea>
     </div>
     <div class="card">
@@ -1065,6 +1071,13 @@ function scheduleGenerate() {
       generateWatermark();
     }
   }, 600);
+}
+
+function clearField(id) {
+  const el = document.getElementById(id);
+  el.value = '';
+  autoResize(el);
+  if (id === 'orig-text') scheduleGenerate();
 }
 
 function autoResize(el) {
