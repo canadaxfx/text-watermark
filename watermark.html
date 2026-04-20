@@ -194,7 +194,8 @@ textarea { overflow-y: hidden; }
   <!-- Watermark Panel -->
   <div id="panel-watermark" class="panel">
     <div class="panel-desc">
-      在文字中随机插入你的标识字符（如「肖」「潘」「达」），同时嵌入肉眼不可见的零宽字符水印。文字发布后若被他人搬运，可凭水印字符证明原创身份。
+      * 在文字中随机插入你的标识字符（如「肖」「潘」「达」），同时嵌入肉眼不可见的零宽字符水印。文字发布后若被他人搬运，可凭水印字符证明原创身份。<br>
+      * 可将水印文本渲染为图片并自动下载，作为原创证据存档。如需更可信的时间证明，发布后在评论区补发一条含时间的截图。
     </div>
     <div class="card">
       <label for="orig-text">原始文本</label>
@@ -312,7 +313,8 @@ textarea { overflow-y: hidden; }
   <!-- Image Panel -->
   <div id="panel-image" class="panel active">
     <div class="panel-desc">
-      将文字内容渲染成图片，并在图片上叠加斜向水印文字。图片无法直接选中复制文字，被盗难度远高于纯文字发布。适合微博、微信朋友圈等支持图片发布的平台。
+      * 将文字内容渲染成图片，并在图片上叠加斜向水印文字。图片无法直接选中复制文字，被盗难度远高于纯文字发布。适合微博、微信朋友圈等支持图片发布的平台。<br>
+      * 水印图片作为原创证据存档。如需更可信的时间证明，发布后在评论区补发一条含时间的截图。
     </div>
     <div class="card">
       <label for="img-text">文本内容</label>
@@ -322,7 +324,7 @@ textarea { overflow-y: hidden; }
       <label>图片设置</label>
       <div class="settings-row">
         <div>
-          <label for="img-wm-text">水印文字</label>
+          <label for="img-wm-text">水印标识（名字/代号/警告语）</label>
           <input type="text" id="img-wm-text" placeholder="原创·禁止转载">
         </div>
         <div>
@@ -371,8 +373,24 @@ textarea { overflow-y: hidden; }
           </select>
         </div>
       </div>
+      <div style="margin-top:10px">
+        <label>底部标签</label>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; margin-top:4px">
+          <label style="display:flex;align-items:center;gap:4px;font-weight:normal;font-size:0.88em;color:#444;cursor:pointer">
+            <input type="checkbox" class="img-preset-tag" value="抄袭必究">抄袭必究</label>
+          <label style="display:flex;align-items:center;gap:4px;font-weight:normal;font-size:0.88em;color:#444;cursor:pointer">
+            <input type="checkbox" class="img-preset-tag" value="禁止搬运">禁止搬运</label>
+          <label style="display:flex;align-items:center;gap:4px;font-weight:normal;font-size:0.88em;color:#444;cursor:pointer">
+            <input type="checkbox" class="img-preset-tag" value="禁止AI训练">禁止AI训练</label>
+          <label style="display:flex;align-items:center;gap:4px;font-weight:normal;font-size:0.88em;color:#444;cursor:pointer">
+            <input type="checkbox" class="img-preset-tag" value="原创内容，未经授权不得转载">原创内容，未经授权不得转载</label>
+        </div>
+        <textarea id="img-custom-tags" placeholder="自定义标签，每行一条" style="min-height:44px;font-size:0.9em" oninput="autoResize(this)"></textarea>
+        <div class="hint">勾选的标签会显示在图片底部</div>
+      </div>
     </div>
     <button class="btn btn-primary" onclick="generateImage()">生成图片</button>
+    <div class="hint" style="text-align:center; margin-top:6px">水印图片作为原创证据存档。如需更可信的时间证明，发布后在评论区补发一条含时间的截图</div>
     <div id="img-result-section" style="display:none; margin-top:12px">
       <div class="card">
         <label>预览</label>
@@ -1228,12 +1246,18 @@ function generateImage() {
   ctx.font = fontSize + 'px ' + fontStack;
   const lines = wrapTextLines(ctx, text, contentWidth);
 
+  const imgPresetTags = [...document.querySelectorAll('.img-preset-tag:checked')].map(el => el.value);
+  const imgCustomTagsRaw = document.getElementById('img-custom-tags').value.trim();
+  const imgCustomTags = imgCustomTagsRaw ? imgCustomTagsRaw.split('\n').map(s => s.trim()).filter(s => s) : [];
+  const bottomTags = [...imgPresetTags, ...imgCustomTags];
+
   const tsFontSize = Math.round(fontSize * 0.72);
   const tsBarHeight = tsMode === 'footer' ? tsFontSize * 2.6 : 0;
+  const tagsBarHeight = bottomTags.length > 0 ? tsFontSize * 2.6 : 0;
 
   let totalHeight = padding;
   for (const l of lines) totalHeight += l === null ? Math.round(lineHeight * 0.6) : lineHeight;
-  totalHeight += padding + tsBarHeight;
+  totalHeight += padding + tsBarHeight + tagsBarHeight;
 
   canvas.width = canvasWidth;
   canvas.height = Math.max(totalHeight, 200);
@@ -1251,6 +1275,18 @@ function generateImage() {
     if (line === null) { y += Math.round(lineHeight * 0.6); continue; }
     ctx.fillText(line, padding, y);
     y += lineHeight;
+  }
+
+  // Footer tags bar
+  if (bottomTags.length > 0) {
+    const barTop = canvas.height - tsBarHeight - tagsBarHeight;
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(0, barTop, canvas.width, tagsBarHeight);
+    ctx.fillStyle = '#888888';
+    ctx.font = tsFontSize + 'px ' + fontStack;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(bottomTags.join('  ·  '), padding, barTop + tagsBarHeight / 2);
+    ctx.textBaseline = 'top';
   }
 
   // Footer timestamp
