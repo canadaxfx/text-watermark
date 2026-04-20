@@ -1,8 +1,10 @@
 # 文本水印工具 / Text Watermark Tool
 
-一个专为中文社交媒体（微博、微信等）设计的原创内容保护工具。纯前端单HTML文件，无需服务器，无需安装，打开即用。
+一个专为中文社交媒体（微博、微信等）设计的原创内容保护工具。纯前端单HTML文件，无需服务器，无需安装，用浏览器打开即用（Chrome / Safari / Edge）。
 
-A client-side content protection tool for Chinese social media. Single HTML file, no server, no installation required.
+A client-side content protection tool for Chinese social media. Single HTML file, no server, no installation required. Open with any modern browser.
+
+GitHub: [github.com/canadaxfx/text-watermark](https://github.com/canadaxfx/text-watermark)
 
 ---
 
@@ -26,7 +28,7 @@ A client-side content protection tool for Chinese social media. Single HTML file
 
 - 支持中文字符（逐字插入）和英文单词（整词插入）
 - 六种括号随机混搭：【】「」〖〗〈〉〔〕（）
-- 密度可调（适中默认：每段重复2次）
+- 密度可调（稀疏 / 适中 / 密集）
 
 示例：`郭靖四周全笼罩着黑雾，但很快九【肖】阴真经就把毒雾控制`
 
@@ -34,9 +36,9 @@ A client-side content protection tool for Chinese social media. Single HTML file
 
 与其插入无意义假字符，干扰项会将原文中的词语用括号包裹。
 
-- 窃取者若删除所有括号内容 → 原文出现缺字，文意破损
+- 抄袭者若删除所有括号内容 → 原文出现缺字，文意破损
 - 若逐一判断哪些括号要保留 → 需手动重建全文，得不偿失
-- 密度设置：每 N 字一个（默认每10字一个，0=关闭）
+- 密度设置：每 N 字一个（默认每15字一个，0=关闭）
 
 示例：`郭靖和【欧阳】锋打了两次` → 删除括号后：`郭靖和锋打了两次`
 
@@ -48,6 +50,16 @@ A client-side content protection tool for Chinese social media. Single HTML file
 - 经测试可在微博发布后通过复制粘贴完整保留
 - 即使可见括号标记被全部删除，零宽字符仍可被验证工具检出
 
+### 自定义警告语
+
+可勾选预设短语或自行填写，随机插入文中作为额外水印层：
+
+- 抄袭必究
+- 禁止搬运
+- 禁止AI训练
+- 原创内容，未经授权不得转载
+- 或自定义任意短语
+
 ---
 
 ## 文字转水印图片
@@ -55,10 +67,12 @@ A client-side content protection tool for Chinese social media. Single HTML file
 将文字内容渲染为图片，叠加斜向水印文字。图片无法直接选中复制文字，大幅提高盗用难度。
 
 **设置选项：**
-- 水印文字（留空自动使用水印标识）
+- 水印文字（留空使用默认标识）
+- 水印大小：小 / 中 / 大
 - 水印颜色：灰 / 红 / 蓝 / 黑
 - 水印深浅：浅 / 中 / 深
-- 正文字号：小(16px) / 中(18px) / 大(20px)
+- 正文字号：小(28px) / 中(34px) / 大(40px)
+- 时间戳：不添加 / 底部标注 / 融入水印文字
 
 ---
 
@@ -88,9 +102,9 @@ A client-side content protection tool for Chinese social media. Single HTML file
 
 ## 使用方法
 
-1. 用浏览器打开 `watermark.html`（电脑/手机均可，无需联网）
+1. 用浏览器打开 `watermark.html`（Chrome / Safari / Edge，电脑/手机均可，无需联网）
 2. **发图片**：进入"文字转水印图片"标签页，粘贴文字，配置水印，生成下载
-3. **发文字**：进入"纯文字水印"标签页，粘贴原文，填写标识，文字实时生成，复制发布
+3. **发文字**：进入"纯文字水印"标签页，粘贴原文，填写标识，文字实时生成，复制带水印文本粘贴发布
 4. **留存证**：生成水印后点击"生成存证图片"，本地保存备查
 5. **验证**：进入"验证标识"标签页，粘贴可疑文字，一键检测
 
@@ -103,10 +117,11 @@ A client-side content protection tool for Chinese social media. Single HTML file
 | 原始文本 | 粘贴要保护的文章 |
 | 水印标识 | 你的名字/代号，保存在浏览器中 |
 | 括号样式 | 混合随机 / 指定单一样式 |
-| 插入密度 | 稀疏（1次）/ 适中（2次）/ 密集（3次） |
+| 插入密度 | 稀疏 / 适中 / 密集 |
 | 干扰项密度 | 每 N 字一个（0 = 关闭） |
 | 尾部声明 | 在文末添加"本文含×××字样水印"声明 |
-| 自定义警告语 | 每行一条警告短语，随机插入文中（如：抄袭必究） |
+| 自定义警告语 | 勾选预设短语或每行一条自定义短语，随机插入文中 |
+| 界面字号 | 小 / 中 / 大，调整工具界面文字大小 |
 
 ---
 
@@ -126,12 +141,15 @@ A client-side content protection tool for Chinese social media. Single HTML file
 - 纯文字水印无法阻止技术用户用正则表达式批量删除所有括号内容，但干扰项会使原文出现缺字，暴露删改行为
 - 短文可能位置不足，工具会尽量多插入
 - 验证功能展示证据，无法自动向平台举报
+- "禁止AI训练"等文字声明对爬虫无技术约束力，仅作法律意义上的意图声明
 
 ---
 
 ## 版权与署名
 
-© 2026 [作者]. 保留所有权利。本工具仅供个人使用。
+© 2026 CanadaXFX. 保留所有权利。本工具可免费用于个人非商业用途，转载或二次分发须注明原作者。禁止商业使用。
+
+*Free for personal, non-commercial use with attribution. Commercial use prohibited.*
 
 ---
 
@@ -139,9 +157,10 @@ A client-side content protection tool for Chinese social media. Single HTML file
 
 单文件架构，所有逻辑在 `<script>` 内：
 
-- `generateWatermark()` — 主流程：括号标识 + 干扰项 + ZWC编码
+- `generateWatermark()` — 主流程：括号标识 + 干扰项 + ZWC编码 + 自定义警告语
 - `verifyWatermark()` — 检测括号标记 + ZWC解码
 - `zwcEncode() / zwcDecode()` — 零宽字符编解码
 - `tokenizeIdentity()` — 中英文混合标识分词
 - `generateImage() / saveEvidenceImage()` — Canvas图片渲染
+- `setUiFont()` — 界面字号控制
 - `segments[]` — 核心数据结构，类型：original / identity / decoy / custom
