@@ -422,7 +422,7 @@ textarea { overflow-y: hidden; }
       <div class="card">
         <label>三个功能标签页</label>
         <div style="font-size:0.87em; color:#555; line-height:1.8; margin-top:4px">
-          <div style="padding:6px 0; border-bottom:1px solid #f0f0f0"><strong>文字转水印图片</strong> — 将文字渲染为图片，叠加斜向水印（可调大小/颜色/深浅），支持底部时间戳</div>
+          <div style="padding:6px 0; border-bottom:1px solid #f0f0f0"><strong>文字转水印图片</strong> — 将文字渲染为图片，叠加斜向水印（可调大小/颜色/深浅），支持底部时间戳和底部标签栏</div>
           <div style="padding:6px 0; border-bottom:1px solid #f0f0f0"><strong>纯文字水印</strong> — 三层保护：括号标识 + 干扰项 + 不可见零宽字符；实时生成，支持存证图片</div>
           <div style="padding:6px 0"><strong>验证标识</strong> — 检测括号标记并提取标识，同时解码零宽字符水印，两层独立验证</div>
         </div>
@@ -434,7 +434,7 @@ textarea { overflow-y: hidden; }
           <div><strong>① 括号标识（可见）</strong><br>你的名字拆分后散布全文，如「肖」〖潘〗【达】。中文逐字插入，英文整词插入（如【Alice】）。</div>
           <div style="margin-top:8px"><strong>② 干扰项（可见，包裹原文）</strong><br>将原文中的词语用括号括起。删除所有括号 → 原文缺字破损；逐一保留 → 需手动重建全文。</div>
           <div style="margin-top:8px"><strong>③ 零宽字符（不可见）</strong><br>身份标识编码为二进制，嵌入文中三处，肉眼不可见。经测试在微博发布后复制仍保留。</div>
-          <div style="margin-top:8px"><strong>+ 自定义警告语</strong><br>可勾选抄袭必究 / 禁止搬运 / 禁止AI训练等短语，或自定义填写，随机插入文中。</div>
+          <div style="margin-top:8px"><strong>+ 自定义警告语</strong><br>可勾选抄袭必究 / 禁止搬运 / 禁止AI训练等短语，或自定义填写，随机插入文中。图片模式下可选择显示为底部标签栏。</div>
         </div>
       </div>
 
