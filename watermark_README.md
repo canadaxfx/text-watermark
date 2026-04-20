@@ -4,7 +4,9 @@
 
 A client-side content protection tool for Chinese social media. Single HTML file, no server, no installation required. Open with any modern browser.
 
-GitHub: [github.com/canadaxfx/text-watermark](https://github.com/canadaxfx/text-watermark)
+**在线使用（无需下载）**: https://canadaxfx.github.io/text-watermark/
+
+**下载本地版**: [github.com/canadaxfx/text-watermark](https://github.com/canadaxfx/text-watermark)（点击 watermark.html → Download raw file）
 
 ---
 

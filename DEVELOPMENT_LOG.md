@@ -209,6 +209,19 @@
 
 ---
 
+---
+
+### v2.3 — GitHub Pages 部署 & 下载入口
+
+**改动**:
+
+- **GitHub Pages 上线**：通过 GitHub Pages 部署为在线工具，用户无需下载即可直接使用
+  - 在线地址：https://canadaxfx.github.io/text-watermark/
+  - 新增 `index.html`（与 `watermark.html` 保持同步）供 Pages 服务
+- **页脚下载链接**：新增"下载本地版 ↓"链接，指向 GitHub 仓库页面，方便用户下载离线版
+
+---
+
 ## 已知局限
 
 - 技术用户可用正则批量删除括号，但干扰项设计使原文出现缺字
