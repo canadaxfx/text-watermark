@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文本水印工具</title>
+<!--
+  文本水印工具 (Text Watermark Tool)
+  © 2026 [你的名字]. All Rights Reserved.
+  Created: April 2026
+  GitHub: [你的GitHub链接]
+
+  Personal, non-commercial use permitted with attribution.
+  Commercial use prohibited without written permission.
+-->
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f0f2f5;
+  color: #1a1a1a;
+  padding: 12px;
+  min-height: 100vh;
+}
+.container { max-width: 600px; margin: 0 auto; }
+h1 { text-align: center; font-size: 1.4em; margin-bottom: 12px; color: #333; }
+.tabs {
+  display: flex; margin-bottom: 12px; border-radius: 8px;
+  overflow: hidden; border: 1px solid #ddd;
+}
+.tab {
+  flex: 1; padding: 10px 6px; text-align: center; background: #fff;
+  border: none; cursor: pointer; transition: background 0.2s; line-height: 1.3;
+}
+.tab.active { background: #4a90d9; color: #fff; }
+.tab:not(.active):hover { background: #e8e8e8; }
+.tab-name { font-size: 0.92em; font-weight: 600; }
+.tab-desc { font-size: 0.7em; opacity: 0.75; margin-top: 2px; }
+.panel-desc {
+  background: #f0f7ff; border-left: 3px solid #4a90d9;
+  padding: 10px 12px; border-radius: 0 6px 6px 0; font-size: 0.87em;
+  color: #555; margin-bottom: 12px; line-height: 1.6;
+}
+.card {
+  background: #fff; border-radius: 8px; padding: 14px;
+  margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: #555; }
+input[type="text"], textarea {
+  width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+  font-size: 1em; font-family: inherit; resize: vertical;
+}
+textarea { min-height: 100px; }
+input[type="text"]:focus, textarea:focus { outline: none; border-color: #4a90d9; }
+.settings-row { display: flex; gap: 10px; margin-top: 8px; }
+.settings-row > div { flex: 1; }
+.settings-row label { font-size: 0.85em; }
+select {
+  width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;
+  font-size: 0.9em; background: #fff;
+}
+.btn {
+  display: block; width: 100%; padding: 12px; border: none; border-radius: 6px;
+  font-size: 1.05em; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.btn-primary { background: #4a90d9; color: #fff; }
+.btn-primary:hover { background: #3a7bc8; }
+.btn-secondary { background: #e8e8e8; color: #333; }
+.btn-secondary:hover { background: #d8d8d8; }
+.btn + .btn { margin-top: 8px; }
+.result-box {
+  background: #f9f9f9; border: 1px solid #ddd; border-radius: 6px;
+  padding: 12px; min-height: 80px; white-space: pre-wrap; word-break: break-all;
+  line-height: 1.8; font-size: 1.2em; position: relative;
+}
+.marker-char { color: #d9534f; font-weight: 700; }
+.decoy-char { color: #f0ad4e; font-weight: 700; }
+.zone-char { background: #e8f4fd; border-radius: 2px; }
+.zone-marker-char { background: #fce4e4; border-radius: 2px; }
+.mark-dot-below { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+.mark-wave { text-decoration: underline wavy; text-underline-offset: 3px; }
+.mark-overline { text-decoration: overline; }
+.mark-dot-above { text-decoration: overline dotted; }
+.mark-underline { text-decoration: underline; text-underline-offset: 3px; }
+.verify-found {
+  background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 0.95em;
+}
+.verify-found strong { color: #d9534f; }
+.panel { display: none; }
+.panel.active { display: block; }
+.hint { font-size: 0.8em; color: #999; margin-top: 4px; }
+.toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+  background: #333; color: #fff; padding: 10px 24px; border-radius: 20px;
+  font-size: 0.95em; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999;
+}
+.toast.show { opacity: 1; }
+.legend {
+  display: flex; gap: 12px; margin-top: 8px; font-size: 0.8em; color: #777; flex-wrap: wrap;
+}
+.legend span::before {
+  content: ''; display: inline-block; width: 10px; height: 10px;
+  border-radius: 2px; margin-right: 4px; vertical-align: middle;
+}
+.legend .leg-marker::before { background: #d9534f; }
+.legend .leg-decoy::before { background: #f0ad4e; }
+.legend .leg-zone::before { background: #e8f4fd; border: 1px solid #b0d4f1; }
+.legend .leg-zone-marker::before { background: #fce4e4; border: 1px solid #e8a0a0; }
+.legend .leg-custom::before { background: #c3e6cb; border: 1px solid #8fd19e; }
+.toggle-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.toggle-row label { margin: 0; font-size: 0.85em; }
+.toggle-row input[type="checkbox"] { width: 18px; height: 18px; }
+.custom-line {
+  color: #155724;
+  font-weight: 700;
+  background: #d4edda;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+.settings-toggle {
+  background: none; border: none; color: #4a90d9; cursor: pointer;
+  font-size: 0.9em; font-weight: 600; padding: 0; font-family: inherit;
+}
+.settings-toggle:hover { color: #3a7bc8; }
+textarea { overflow-y: hidden; }
+.help-link {
+  display: block; text-align: center; margin-bottom: 14px;
+  font-size: 0.82em; color: #4a90d9; cursor: pointer; text-decoration: none;
+}
+.help-link:hover { text-decoration: underline; }
+.modal-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 1000; overflow-y: auto;
+}
+.modal-backdrop.open { display: block; }
+.modal-box {
+  background: #fff; border-radius: 10px; max-width: 560px;
+  margin: 40px auto 40px; padding: 0; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid #eee;
+}
+.modal-header h2 { font-size: 1.05em; color: #333; margin: 0; }
+.modal-close {
+  background: none; border: none; font-size: 1.4em; cursor: pointer;
+  color: #999; line-height: 1; padding: 0 4px;
+}
+.modal-close:hover { color: #333; }
+.modal-body { padding: 14px; }
+.modal-body .card { margin-bottom: 12px; box-shadow: none; border: 1px solid #eee; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>文本水印工具</h1>
+  <a class="help-link" onclick="document.getElementById('about-modal').classList.add('open')">使用说明 &amp; 版权声明 ↗</a>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('image', this)">
+      <div class="tab-name">文字转水印图片</div>
+      <div class="tab-desc">文字转图片，防截取搬运</div>
+    </button>
+    <button class="tab" onclick="switchTab('watermark', this)">
+      <div class="tab-name">纯文字水印</div>
+      <div class="tab-desc">插入隐藏标识字符</div>
+    </button>
+    <button class="tab" onclick="switchTab('verify', this)">
+      <div class="tab-name">验证标识</div>
+      <div class="tab-desc">检测文字是否被盗用</div>
+    </button>
+  </div>
+
+  <!-- Watermark Panel -->
+  <div id="panel-watermark" class="panel">
+    <div class="panel-desc">
+      在文字中随机插入你的标识字符（如「肖」「潘」「达」），同时嵌入肉眼不可见的零宽字符水印。文字发布后若被他人搬运，可凭水印字符证明原创身份。
+    </div>
+    <div class="card">
+      <label for="orig-text">原始文本</label>
+      <textarea id="orig-text" placeholder="粘贴要加水印的文本..." oninput="autoResize(this); scheduleGenerate()"></textarea>
+    </div>
+
+    <div class="card">
+      <label for="identity">水印标识（你的名字/代号）</label>
+      <input type="text" id="identity" placeholder="例如：肖潘达、飞侠、Alice" oninput="scheduleGenerate()">
+      <div class="hint">保存在浏览器中，下次自动填入</div>
+    </div>
+
+    <div class="card" style="padding-bottom:12px">
+      <button class="settings-toggle" onclick="toggleAdvanced(this)">高级设置 ▲</button>
+      <div id="advanced-settings" style="display:block; margin-top:10px">
+        <div class="settings-row">
+          <div>
+            <label for="bracket-style">括号样式</label>
+            <select id="bracket-style" onchange="scheduleGenerate()">
+              <option value="mixed">混合随机</option>
+              <option value="【】">【】</option>
+              <option value="「」">「」</option>
+              <option value="〖〗">〖〗</option>
+              <option value="〈〉">〈〉</option>
+              <option value="〔〕">〔〕</option>
+              <option value="（）">（）</option>
+            </select>
+          </div>
+          <div>
+            <label for="density">插入密度</label>
+            <select id="density" onchange="scheduleGenerate()">
+              <option value="low">稀疏（更隐蔽）</option>
+              <option value="medium" selected>适中</option>
+              <option value="high">密集（更保险）</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-row" style="margin-top:8px">
+          <div>
+            <label for="decoy-count">干扰项密度</label>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:2px">
+              <span style="font-size:0.9em; color:#555; white-space:nowrap">每</span>
+              <input type="number" id="decoy-count" min="0" max="200" value="15"
+                style="width:60px; padding:6px 8px; border:1px solid #ddd; border-radius:6px; font-size:0.95em; text-align:center"
+                oninput="scheduleGenerate()">
+              <span style="font-size:0.9em; color:#555; white-space:nowrap">字一个（0 = 不添加）</span>
+            </div>
+            <div class="hint" style="margin-top:4px">干扰项会将原文中的词语用括号包裹。若窃取者删除所有括号内容，原文会出现缺字；若想保留原文，则需逐句重建，大幅增加删除难度。</div>
+          </div>
+          <div>
+            <label for="add-footer">尾部声明</label>
+            <select id="add-footer" onchange="scheduleGenerate()">
+              <option value="yes" selected>添加</option>
+              <option value="no">不添加</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label for="custom-lines">自定义警告语（每行一个）</label>
+          <textarea id="custom-lines" placeholder="每行一条，例如：&#10;抄袭必究&#10;禁止搬运&#10;原创内容" style="min-height:60px;font-size:0.9em" oninput="autoResize(this); scheduleGenerate()"></textarea>
+          <div class="hint">这些短语会随机插入到文本中，作为额外水印层</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="generateWatermark()">生成水印文本</button>
+
+    <div id="wm-result-section" style="display:none; margin-top:12px;">
+      <div class="card">
+        <label>水印结果</label>
+        <div class="result-box" id="wm-result"></div>
+        <div class="legend">
+          <span class="leg-marker">水印字符</span>
+          <span class="leg-decoy">干扰字符</span>
+          <span class="leg-zone">标记区域（原文）</span>
+          <span class="leg-zone-marker">标记区域（水印）</span>
+          <span class="leg-custom">自定义警告语</span>
+        </div>
+        <div class="hint" style="margin-top:6px">✓ 已嵌入不可见零宽字符水印层</div>
+      </div>
+      <button class="btn btn-secondary" onclick="copyPlain()">复制文本 → 粘贴到微博/微信发布</button>
+      <div class="hint" style="text-align:center; margin-bottom:8px">纯文字，可直接粘贴到任何平台发布</div>
+      <button class="btn btn-secondary" onclick="saveEvidenceImage()">生成存证图片 → 保存到本地</button>
+      <div class="hint" style="text-align:center">将水印文本渲染为图片并自动下载，可作为原创证据存档</div>
+    </div>
+  </div>
+
+  <!-- Verify Panel -->
+  <div id="panel-verify" class="panel">
+    <div class="panel-desc">
+      将可疑文字粘贴到下方，检测是否含有本工具生成的水印标识，并提取标识内容。同时检测括号标记和不可见零宽字符两层水印。
+    </div>
+    <div class="card">
+      <label for="verify-text">待检测文本</label>
+      <textarea id="verify-text" placeholder="粘贴可疑文本..." oninput="autoResize(this)"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="verifyWatermark()">检测水印</button>
+    <div id="verify-result-section" style="display:none; margin-top:12px;">
+      <div class="card">
+        <label>检测结果</label>
+        <div class="result-box" id="verify-result"></div>
+        <div id="verify-found"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Panel -->
+  <div id="panel-image" class="panel active">
+    <div class="panel-desc">
+      将文字内容渲染成图片，并在图片上叠加斜向水印文字。图片无法直接选中复制文字，被盗难度远高于纯文字发布。适合微博、微信朋友圈等支持图片发布的平台。
+    </div>
+    <div class="card">
+      <label for="img-text">文本内容</label>
+      <textarea id="img-text" placeholder="粘贴文本..." style="min-height:140px" oninput="autoResize(this)"></textarea>
+      <button class="btn btn-secondary" style="margin-top:8px" onclick="useWatermarkResult()">使用"文字水印"标签页的生成结果</button>
+    </div>
+    <div class="card">
+      <label>图片设置</label>
+      <div class="settings-row">
+        <div>
+          <label for="img-wm-text">水印文字</label>
+          <input type="text" id="img-wm-text" placeholder="留空则使用水印标识">
+        </div>
+        <div>
+          <label for="img-wm-color">水印颜色</label>
+          <select id="img-wm-color">
+            <option value="#999999">灰色</option>
+            <option value="#cc3333">红色</option>
+            <option value="#4a90d9">蓝色</option>
+            <option value="#333333">黑色</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-row" style="margin-top:8px">
+        <div>
+          <label for="img-wm-opacity">水印深浅</label>
+          <select id="img-wm-opacity">
+            <option value="0.08">浅</option>
+            <option value="0.15" selected>中</option>
+            <option value="0.28">深</option>
+          </select>
+        </div>
+        <div>
+          <label for="img-font-size">正文字号</label>
+          <select id="img-font-size">
+            <option value="16">小（16px）</option>
+            <option value="18" selected>中（18px）</option>
+            <option value="20">大（20px）</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="generateImage()">生成图片</button>
+    <div id="img-result-section" style="display:none; margin-top:12px">
+      <div class="card">
+        <label>预览</label>
+        <canvas id="img-canvas" style="max-width:100%; border:1px solid #ddd; border-radius:4px; display:block"></canvas>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:8px" onclick="downloadImage()">下载图片（PNG）</button>
+    </div>
+  </div>
+
+  <div style="text-align:center; font-size:0.85em; color:#666; margin-top:16px; margin-bottom:4px; line-height:1.8; border-top:1px solid #ddd; padding-top:14px">
+    © 2026 [你的名字]. 保留所有权利.<br>
+    GitHub: <a href="#" style="color:#4a90d9; text-decoration:none">[你的GitHub链接]</a>
+  </div>
+</div>
+
+<!-- About Modal -->
+<div id="about-modal" class="modal-backdrop" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>使用说明 &amp; 版权声明</h2>
+      <button class="modal-close" onclick="document.getElementById('about-modal').classList.remove('open')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="card" style="text-align:center; padding:16px 14px">
+        <div style="font-size:1.2em; font-weight:700; color:#333; margin-bottom:4px">文本水印工具</div>
+        <div style="font-size:0.82em; color:#aaa">Text Watermark Tool · v1.0 · April 2026</div>
+      </div>
+
+      <div class="card">
+        <label>三个功能标签页</label>
+        <div style="font-size:0.87em; color:#555; line-height:1.8; margin-top:4px">
+          <div style="padding:6px 0; border-bottom:1px solid #f0f0f0"><strong>文字转水印图片</strong> — 将文字渲染为图片，叠加斜向水印，无法直接复制文字</div>
+          <div style="padding:6px 0; border-bottom:1px solid #f0f0f0"><strong>纯文字水印</strong> — 插入可见括号标识 + 不可见零宽字符，双重保护，支持生成存证图片</div>
+          <div style="padding:6px 0"><strong>验证标识</strong> — 检测文字中是否含有本工具生成的水印并提取标识</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>三层水印保护（纯文字水印）</label>
+        <div style="font-size:0.87em; color:#555; line-height:1.9; margin-top:4px">
+          <div><strong>① 括号标识（可见）</strong><br>你的名字拆分后散布全文，如「肖」〖潘〗【达】。中文逐字插入，英文整词插入（如【Alice】）。</div>
+          <div style="margin-top:8px"><strong>② 干扰项（可见，包裹原文）</strong><br>将原文中的词语用括号括起。删除所有括号 → 原文缺字破损；逐一保留 → 需手动重建全文。</div>
+          <div style="margin-top:8px"><strong>③ 零宽字符（不可见）</strong><br>身份标识编码为二进制，嵌入文中三处，肉眼不可见。经测试在微博发布后复制仍保留。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>如何为自己的内容留存证据</label>
+        <div style="font-size:0.87em; color:#555; line-height:1.8; margin-top:4px">
+          <div>1. 在"纯文字水印"页，将文章加水印后点击 <strong>"生成存证图片"</strong></div>
+          <div>2. 图片会标注所有水印位置（红色高亮）+ 生成时间戳，自动下载到本地</div>
+          <div>3. 将此图片保存到安全位置（相册、网盘等）作为原创证明</div>
+          <div style="margin-top:6px; color:#888">时间戳由本地浏览器生成。如需更可信的时间证明，发布后在评论区发一条含时间的截图。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>版权声明 / Copyright</label>
+        <div style="font-size:0.87em; color:#555; line-height:1.8; margin-top:4px">
+          <strong>© 2026 [你的名字]. 保留所有权利.</strong><br>
+          本工具可免费用于个人非商业用途，转载或二次分发须注明原作者。禁止商业使用。<br><br>
+          <em>Free for personal, non-commercial use with attribution. Commercial use prohibited.</em>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>开源地址</label>
+        <div style="font-size:0.87em; color:#555; line-height:1.8">
+          GitHub: <strong style="color:#4a90d9">[你的GitHub链接]</strong>
+          <div class="hint" style="margin-top:4px">欢迎 Star，使用时请注明原作者</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BRACKETS_ALL = ['【】', '「」', '〖〗', '〈〉', '〔〕', '（）'];
+const DECOY_CHARS = '真原创首发独家正版作者出处来源声明版权所有保留权利'.split('');
+const ZONE_MARKS = ['\u0323', '\u0330', '\u0305', '\u0307', '\u0332'];
+const ZONE_MARK_MAP = { 'dot-below': '\u0323', 'wave': '\u0330', 'overline': '\u0305', 'dot-above': '\u0307', 'underline': '\u0332' };
+const ZONE_NAMES = {'\u0323':'下加点','\u0330':'波浪线','\u0305':'上划线','\u0307':'上加点','\u0332':'下划线'};
+
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function hashString(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  return h;
+}
+
+function pickBracket(rng, style) {
+  if (style === 'mixed') return BRACKETS_ALL[Math.floor(rng() * BRACKETS_ALL.length)];
+  return style;
+}
+
+function pickMark(rng, style) {
+  if (style === 'mixed') return ZONE_MARKS[Math.floor(rng() * ZONE_MARKS.length)];
+  return ZONE_MARK_MAP[style] || style;
+}
+
+function isPunctuation(ch) {
+  const code = ch.charCodeAt(0);
+  return /[\s@#，。！？、；：""''【】《》（）「」〖〗〈〉〔〕\[\]{}()<>.,!?;:'"\/\\~`@#$%^&*\-+=|_\n\r]/.test(ch) ||
+    (code >= 0x1F600 && code <= 0x1F64F) ||
+    (code >= 0x1F300 && code <= 0x1F5FF) ||
+    (code >= 0x1F680 && code <= 0x1F6FF) ||
+    (code >= 0x2600 && code <= 0x26FF) ||
+    (code >= 0x2700 && code <= 0x27BF);
+}
+
+function getInsertPositions(text, count, rng) {
+  const eligible = [];
+  for (let i = 1; i < text.length; i++) {
+    const ch = text[i];
+    if (!isPunctuation(ch) && ch !== '\n' && ch !== '\r') {
+      if (text[i - 1] !== '@' && text[i - 1] !== '#') {
+        eligible.push(i);
+      }
+    }
+  }
+  const shuffled = [...eligible];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const minSpacing = 4;
+  const selected = [];
+  for (const pos of shuffled) {
+    if (selected.length >= count) break;
+    const tooClose = selected.some(p => Math.abs(p - pos) < minSpacing);
+    if (!tooClose) selected.push(pos);
+  }
+  selected.sort((a, b) => a - b);
+  return selected;
+}
+
+// Find combining mark code points in a string
+function getCombiningMarkSet() {
+  return new Set(ZONE_MARKS);
+}
+
+function tokenizeIdentity(identity) {
+  const tokens = [];
+  let buf = '';
+  for (const ch of identity) {
+    const code = ch.codePointAt(0);
+    const isCJK = (code >= 0x4E00 && code <= 0x9FFF) ||
+                  (code >= 0x3400 && code <= 0x4DBF) ||
+                  (code >= 0xF900 && code <= 0xFAFF);
+    const isSpace = /\s/.test(ch);
+    if (isCJK || isSpace) {
+      if (buf) { tokens.push(buf); buf = ''; }
+      if (isCJK) tokens.push(ch);
+    } else {
+      buf += ch;
+    }
+  }
+  if (buf) tokens.push(buf);
+  return tokens;
+}
+
+function isBracket(ch) {
+  return /[【】「」〖〗〈〉〔〕（）\[\]{}()<>《》]/.test(ch);
+}
+
+const ZWC_MARK = '\u200D';
+const ZWC_ZERO = '\u200B';
+const ZWC_ONE  = '\u200C';
+
+function zwcEncode(identity) {
+  const chars = [...identity];
+  const len = chars.length;
+  let payload = ZWC_MARK.repeat(8);
+  for (let i = 7; i >= 0; i--) payload += (len >> i) & 1 ? ZWC_ONE : ZWC_ZERO;
+  for (const ch of chars) {
+    const code = ch.codePointAt(0);
+    for (let i = 15; i >= 0; i--) payload += (code >> i) & 1 ? ZWC_ONE : ZWC_ZERO;
+  }
+  payload += ZWC_MARK.repeat(8);
+  return payload;
+}
+
+function zwcDecode(text) {
+  const zwc = [...text].filter(c => c === ZWC_ZERO || c === ZWC_ONE || c === ZWC_MARK).join('');
+  const sentinel = ZWC_MARK.repeat(8);
+  let searchFrom = 0;
+  while (searchFrom < zwc.length) {
+    const sIdx = zwc.indexOf(sentinel, searchFrom);
+    if (sIdx < 0) break;
+    const dataBits = [...zwc.slice(sIdx + 8)].filter(c => c !== ZWC_MARK);
+    if (dataBits.length < 8) { searchFrom = sIdx + 1; continue; }
+    let len = 0;
+    for (let i = 0; i < 8; i++) len = (len << 1) | (dataBits[i] === ZWC_ONE ? 1 : 0);
+    if (len <= 0 || len > 30 || dataBits.length < 8 + len * 16) { searchFrom = sIdx + 1; continue; }
+    let identity = '';
+    for (let c = 0; c < len; c++) {
+      let code = 0;
+      for (let i = 0; i < 16; i++) code = (code << 1) | (dataBits[8 + c * 16 + i] === ZWC_ONE ? 1 : 0);
+      identity += String.fromCodePoint(code);
+    }
+    return identity;
+  }
+  return null;
+}
+
+function generateWatermark() {
+  const identity = document.getElementById('identity').value.trim();
+  if (!identity) { showToast('请输入水印标识'); return; }
+  const text = document.getElementById('orig-text').value;
+  if (!text.trim()) { showToast('请输入原始文本'); return; }
+
+  localStorage.setItem('wm_identity', identity);
+  localStorage.setItem('wm_bracket_style', document.getElementById('bracket-style').value);
+  localStorage.setItem('wm_density', document.getElementById('density').value);
+  localStorage.setItem('wm_decoy_count', document.getElementById('decoy-count').value);
+  localStorage.setItem('wm_add_footer', document.getElementById('add-footer').value);
+  localStorage.setItem('wm_custom_lines', document.getElementById('custom-lines').value);
+
+  const style = document.getElementById('bracket-style').value;
+  const density = document.getElementById('density').value;
+  const decoyN = parseInt(document.getElementById('decoy-count').value) || 0;
+  const addFooter = document.getElementById('add-footer').value === 'yes';
+  const enableZones = false;
+  const zoneStyle = 'mixed';
+  const zoneRadius = 0;
+
+  const identityChars = tokenizeIdentity(identity);
+  let repeats;
+  if (density === 'low') repeats = 1;
+  else if (density === 'medium') repeats = 2;
+  else repeats = 3;
+
+  // Build marker sequence
+  let markerSeq = [];
+  for (let r = 0; r < repeats; r++) markerSeq.push(...identityChars);
+
+  // Add decoys based on N-chars-per-decoy ratio
+  const textLen = [...text].length;
+  const decoyCount = decoyN === 0 ? 0 : Math.max(1, Math.round(textLen / decoyN));
+  const decoys = [];
+  for (let i = 0; i < decoyCount; i++) {
+    decoys.push({ isDecoy: true });
+  }
+
+  const allMarkers = [
+    ...markerSeq.map(ch => ({ char: ch, isDecoy: false })),
+    ...decoys
+  ];
+
+  const seed = hashString(text + identity);
+  const rng = mulberry32(seed);
+
+  const positions = getInsertPositions(text, allMarkers.length, rng);
+  if (positions.length < allMarkers.length) allMarkers.length = positions.length;
+
+  // Shuffle marker assignment
+  const markersShuffled = [...allMarkers];
+  for (let i = markersShuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [markersShuffled[i], markersShuffled[j]] = [markersShuffled[j], markersShuffled[i]];
+  }
+
+  // Step 1: Build bracketed text, track identity marker positions
+  // We work with an array of "segments": {text, isIdentityMarker, isDecoyMarker}
+  let segments = [];
+  let posIdx = 0;
+  let nextPos = positions[0];
+
+  for (let i = 0; i < text.length; i++) {
+    segments.push({ text: text[i], type: 'original' });
+
+    if (i + 1 === nextPos && posIdx < positions.length) {
+      const m = markersShuffled[posIdx];
+      const bracket = pickBracket(rng, style);
+
+      if (m.isDecoy) {
+        // Wrap 1-2 preceding original characters in brackets
+        const wrapLen = 1 + Math.floor(rng() * 2);
+        const toWrap = [];
+        let si = segments.length - 1;
+        while (toWrap.length < wrapLen && si >= 0) {
+          const seg = segments[si];
+          if (seg.type === 'original' && seg.text.length === 1 && !isPunctuation(seg.text)) {
+            toWrap.unshift(seg.text);
+            si--;
+          } else break;
+        }
+        if (toWrap.length > 0) {
+          segments.splice(si + 1, toWrap.length);
+          segments.push({ text: bracket[0] + toWrap.join('') + bracket[1], type: 'decoy' });
+        }
+      } else {
+        segments.push({ text: bracket[0] + m.char + bracket[1], type: 'identity' });
+      }
+
+      posIdx++;
+      nextPos = positions[posIdx];
+    }
+  }
+
+  // Step 2: Insert custom phrases at random positions
+  const customInput = document.getElementById('custom-lines').value.trim();
+  const customPhrases = customInput ? customInput.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
+
+  if (customPhrases.length > 0) {
+    // Find eligible insert positions in current segments
+    // Convert segments to a flat character array with types for position calculation
+    const segPositions = [];
+    let rIdx = 0;
+    for (let si = 0; si < segments.length; si++) {
+      const segLen = [...segments[si].text].length;
+      for (let j = 0; j < segLen; j++) {
+        segPositions.push({ segIdx: si, charInSeg: j });
+        rIdx++;
+      }
+    }
+
+    // Determine how many custom phrase insertions (1-2 per phrase)
+    const phraseInsertCount = Math.min(customPhrases.length * 2, 6);
+    const phrasePositions = getInsertPositions(
+      segments.map(s => s.text).join(''), phraseInsertCount, rng
+    );
+
+    // Insert custom phrases at calculated positions
+    // Work backwards to preserve earlier indices
+    const sortedPositions = [...phrasePositions].sort((a, b) => b - a);
+    let phraseIdx = 0;
+    for (const pp of sortedPositions) {
+      if (phraseIdx >= customPhrases.length * 2) break;
+
+      // Find which segment this position falls in
+      let cumLen = 0;
+      let targetSegIdx = -1;
+      for (let si = 0; si < segments.length; si++) {
+        const segLen = [...segments[si].text].length;
+        if (cumLen + segLen > pp) {
+          targetSegIdx = si;
+          break;
+        }
+        cumLen += segLen;
+      }
+      if (targetSegIdx < 0) targetSegIdx = segments.length - 1;
+
+      const phrase = customPhrases[phraseIdx % customPhrases.length];
+      const bracket = pickBracket(rng, style);
+      const wrappedPhrase = bracket[0] + phrase + bracket[1];
+
+      segments.splice(targetSegIdx + 1, 0, { text: wrappedPhrase, type: 'custom' });
+      phraseIdx++;
+    }
+  }
+
+  // Step 3: Build plain result + identify zone ranges for combining marks
+  let plainResult = segments.map(s => s.text).join('');
+
+  // Find indices in plainResult where identity markers are
+  // Each identity marker segment spans some characters in plainResult
+  let identityRanges = []; // {start, end} in plainResult indices
+  let charIdx = 0;
+  for (const seg of segments) {
+    const len = [...seg.text].length; // grapheme-aware length
+    if (seg.type === 'identity') {
+      identityRanges.push({ start: charIdx, end: charIdx + len });
+    }
+    charIdx += len;
+  }
+
+  // Step 3: Build a map of grapheme index -> segment type (identity/decoy/original)
+  const graphemes = [...plainResult];
+  let segTypeMap = new Array(graphemes.length).fill('original');
+  let runningIdx = 0;
+  for (const seg of segments) {
+    const segLen = [...seg.text].length;
+    for (let j = 0; j < segLen; j++) {
+      if (runningIdx + j < graphemes.length) segTypeMap[runningIdx + j] = seg.type;
+    }
+    runningIdx += segLen;
+  }
+
+  const zoneStack = 1;
+
+  // Step 4: Determine which characters get combining marks
+  // Rules: skip brackets/punctuation, mark all eligible chars in zone
+  let markMap = new Array(graphemes.length).fill(null); // null = no mark, string[] = stacked marks
+
+  if (enableZones) {
+    for (const ir of identityRanges) {
+      const zoneStart = Math.max(0, ir.start - zoneRadius);
+      const zoneEnd = Math.min(graphemes.length, ir.end + zoneRadius);
+
+      // Pick 1-3 distinct marks for stacking
+      let marks = [pickMark(rng, zoneStyle)];
+      if (zoneStack >= 2) {
+        let m2 = pickMark(rng, zoneStyle);
+        while (m2 === marks[0] && zoneStyle === 'mixed') m2 = pickMark(rng, zoneStyle);
+        marks.push(m2);
+      }
+      if (zoneStack >= 3) {
+        let m3 = pickMark(rng, zoneStyle);
+        while ((m3 === marks[0] || m3 === marks[1]) && zoneStyle === 'mixed') m3 = pickMark(rng, zoneStyle);
+        marks.push(m3);
+      }
+
+      for (let i = zoneStart; i < zoneEnd; i++) {
+        const ch = graphemes[i];
+        const code = ch.codePointAt(0);
+        if (code >= 0x0300 && code <= 0x036F) continue;
+        if (isBracket(ch)) continue;
+        if (ch === ' ' || ch === '\n' || ch === '\r') continue;
+
+        // Mark all eligible characters in zone (identity + original)
+        if (i >= ir.start && i < ir.end) {
+          markMap[i] = marks;
+        } else if (!isPunctuation(ch)) {
+          markMap[i] = marks;
+        }
+      }
+    }
+  }
+
+  // Step 5: Build final text with combining marks + HTML
+  let finalPlain = '';
+  let finalHtml = '';
+
+  for (let i = 0; i < graphemes.length; i++) {
+    const ch = graphemes[i];
+    const code = ch.codePointAt(0);
+    const isCombining = (code >= 0x0300 && code <= 0x036F);
+    const segType = segTypeMap[i];
+    const marks = markMap[i]; // null or array of mark strings
+
+    if (marks && !isCombining) {
+      const markStr = marks.join('');
+      finalPlain += ch + markStr;
+
+      let cssClass = '';
+      if (segType === 'identity') cssClass = 'zone-marker-char marker-char';
+      else if (segType === 'decoy') cssClass = 'zone-char decoy-char';
+      else if (segType === 'custom') cssClass = 'zone-char custom-line';
+      else cssClass = 'zone-char';
+
+      // Add CSS classes for visual mark preview
+      const markCssMap = {};
+      markCssMap['\u0323'] = 'mark-dot-below';
+      markCssMap['\u0330'] = 'mark-wave';
+      markCssMap['\u0305'] = 'mark-overline';
+      markCssMap['\u0307'] = 'mark-dot-above';
+      markCssMap['\u0332'] = 'mark-underline';
+      const markCss = marks.map(m => markCssMap[m] || '').join(' ');
+
+      const markLabels = marks.map(m => ZONE_NAMES[m] || m).join('+');
+      finalHtml += '<span class="' + cssClass + ' ' + markCss + '" title="' + escapeHtml(markLabels) + '">' + escapeHtml(ch) + '</span>';
+    } else {
+      finalPlain += ch;
+      if (segType === 'identity') {
+        finalHtml += '<span class="marker-char">' + escapeHtml(ch) + '</span>';
+      } else if (segType === 'decoy') {
+        finalHtml += '<span class="decoy-char">' + escapeHtml(ch) + '</span>';
+      } else if (segType === 'custom') {
+        finalHtml += '<span class="custom-line">' + escapeHtml(ch) + '</span>';
+      } else {
+        finalHtml += escapeHtml(ch);
+      }
+    }
+  }
+
+  // Step 5: Build footer
+  let footerHtml = '';
+  let footerPlain = '';
+  if (addFooter) {
+    const bracket = pickBracket(rng, style);
+    const markerPreview = identityChars.map(c => bracket[0] + c + bracket[1]).join('');
+    const footerText = '本文含' + markerPreview + '字样水印，转载请注明出处。';
+    footerHtml = '<br><span style="color:#888;font-size:0.85em">' + escapeHtml(footerText) + '</span>';
+    footerPlain = '\n' + footerText;
+  }
+
+  // Insert ZWC hidden watermark at 3 positions
+  const zwcPayload = zwcEncode(identity);
+  const pChars = [...finalPlain];
+  const pLen = pChars.length;
+  const zwcPositions = new Set([Math.floor(pLen * 0.25), Math.floor(pLen * 0.5), Math.floor(pLen * 0.75)].filter(v => v > 0 && v < pLen));
+  let finalWithZWC = '';
+  for (let i = 0; i < pChars.length; i++) {
+    if (zwcPositions.has(i)) finalWithZWC += zwcPayload;
+    finalWithZWC += pChars[i];
+  }
+  finalPlain = finalWithZWC;
+
+  document.getElementById('wm-result').innerHTML = finalHtml + footerHtml;
+  window._lastPlainResult = finalPlain + footerPlain;
+  window._lastHtmlResult = finalHtml + footerHtml;
+  document.getElementById('wm-result-section').style.display = 'block';
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function copyPlain() {
+  if (!window._lastPlainResult) return;
+  navigator.clipboard.writeText(window._lastPlainResult).then(() => {
+    showToast('已复制纯文本');
+  }).catch(() => fallbackCopy(window._lastPlainResult));
+}
+
+function copyHighlighted() {
+  if (!window._lastHtmlResult) return;
+  const html = '<div style="line-height:1.8;font-size:1.2em">' +
+    window._lastHtmlResult
+      .replace(/class="marker-char"/g, 'style="color:#d9534f;font-weight:700"')
+      .replace(/class="decoy-char"/g, 'style="color:#f0ad4e;font-weight:700"')
+      .replace(/class="custom-line"/g, 'style="color:#155724;font-weight:700;background:#d4edda;border-radius:2px;padding:0 2px"')
+      .replace(/class="zone-char"/g, 'style="background:#e8f4fd;border-radius:2px"')
+      .replace(/class="zone-marker-char"/g, 'style="background:#fce4e4;border-radius:2px"')
+    + '</div>';
+  const blob = new Blob([html], { type: 'text/html' });
+  const plainBlob = new Blob([window._lastPlainResult], { type: 'text/plain' });
+  navigator.clipboard.write([new ClipboardItem({ 'text/html': blob, 'text/plain': plainBlob })]).then(() => {
+    showToast('已复制高亮文本');
+  }).catch(() => fallbackCopy(window._lastPlainResult));
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  showToast('已复制');
+}
+
+function verifyWatermark() {
+  const text = document.getElementById('verify-text').value;
+  if (!text.trim()) { showToast('请输入待检测文本'); return; }
+
+  // Detect bracket markers
+  const bracketRegex = /[【「〖〈〔（]([^【「〖〈〔（）」〗〉〕】]{1,3})[」〗〉〕）】]/g;
+  const bracketFound = [];
+  let match;
+  while ((match = bracketRegex.exec(text)) !== null) {
+    bracketFound.push({ full: match[0], content: match[1], index: match.index });
+  }
+
+  // Detect combining marks
+  const combiningSet = getCombiningMarkSet();
+  const graphemes = [...text];
+  let combiningPositions = [];
+  let currentZone = null;
+  let zones = [];
+
+  for (let i = 0; i < graphemes.length; i++) {
+    const code = graphemes[i].codePointAt(0);
+    if (code >= 0x0300 && code <= 0x036F) {
+      // This is a combining mark
+      if (!currentZone) {
+        currentZone = { start: i, end: i + 1, marks: [graphemes[i]] };
+      } else if (i <= currentZone.end + 2) {
+        currentZone.end = i + 1;
+        if (!currentZone.marks.includes(graphemes[i])) currentZone.marks.push(graphemes[i]);
+      } else {
+        zones.push(currentZone);
+        currentZone = { start: i, end: i + 1, marks: [graphemes[i]] };
+      }
+    } else {
+      if (currentZone) {
+        zones.push(currentZone);
+        currentZone = null;
+      }
+    }
+  }
+  if (currentZone) zones.push(currentZone);
+
+  // Build highlighted HTML
+  let highlighted = '';
+  let lastIdx = 0;
+
+  // Highlight bracket markers
+  for (const f of bracketFound) {
+    highlighted += escapeHtml(text.substring(lastIdx, f.index));
+    highlighted += '<span class="marker-char">' + escapeHtml(f.full) + '</span>';
+    lastIdx = f.index + f.full.length;
+  }
+
+  // Also highlight combining mark zones if no brackets found
+  if (bracketFound.length === 0 && zones.length > 0) {
+    highlighted = '';
+    for (let i = 0; i < graphemes.length; i++) {
+      const code = graphemes[i].codePointAt(0);
+      if (code >= 0x0300 && code <= 0x036F) {
+        highlighted += '<span style="color:#5bc0de;font-weight:700">' + escapeHtml(graphemes[i]) + '</span>';
+      } else {
+        highlighted += escapeHtml(graphemes[i]);
+      }
+    }
+  }
+
+  document.getElementById('verify-result').innerHTML = highlighted;
+
+  // Build report
+  let report = '';
+  if (bracketFound.length > 0) {
+    const contents = bracketFound.map(f => f.content).join('');
+    const identityGuess = extractIdentity(contents);
+    report += '发现 <strong>' + bracketFound.length + '</strong> 个括号标记，提取内容：<strong>' + escapeHtml(contents) + '</strong>，推测标识：<strong>' + escapeHtml(identityGuess) + '</strong>';
+  }
+  if (zones.length > 0) {
+    const markTypes = [...new Set(zones.flatMap(z => z.marks))].map(m => ZONE_NAMES[m] || m).join('、');
+    if (report) report += '<br>';
+    report += '发现 <strong>' + zones.length + '</strong> 个标记区域，标记类型：<strong>' + escapeHtml(markTypes) + '</strong>';
+  }
+  const hiddenId = zwcDecode(text);
+  if (hiddenId) {
+    if (report && report !== '未发现水印标记') report += '<br>';
+    else report = '';
+    report += '隐藏水印（零宽字符）标识：<strong>' + escapeHtml(hiddenId) + '</strong>';
+  }
+  if (!report) report = '未发现水印标记';
+
+  document.getElementById('verify-found').innerHTML = '<div class="verify-found">' + report + '</div>';
+  document.getElementById('verify-result-section').style.display = 'block';
+}
+
+function extractIdentity(chars) {
+  for (let len = 1; len <= Math.ceil(chars.length / 2); len++) {
+    const pattern = chars.substring(0, len);
+    let match = true;
+    for (let i = 0; i < chars.length; i++) {
+      if (chars[i] !== pattern[i % len]) { match = false; break; }
+    }
+    if (match) return pattern;
+  }
+  return chars;
+}
+
+let _generateTimer = null;
+function scheduleGenerate() {
+  clearTimeout(_generateTimer);
+  _generateTimer = setTimeout(() => {
+    if (document.getElementById('identity').value.trim() &&
+        document.getElementById('orig-text').value.trim()) {
+      generateWatermark();
+    }
+  }, 600);
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function toggleAdvanced(btn) {
+  const panel = document.getElementById('advanced-settings');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? '高级设置 ▾' : '高级设置 ▲';
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function saveEvidenceImage() {
+  if (!window._lastPlainResult) { showToast('请先生成水印文本'); return; }
+  const identity = document.getElementById('identity').value.trim() || '水印';
+  const cleanText = window._lastPlainResult.replace(/[\u200B\u200C\u200D]/g, '');
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const canvasWidth = 750;
+  const padding = 44;
+  const fontSize = 17;
+  const lineHeight = Math.round(fontSize * 1.9);
+  const tsFontSize = 13;
+  const fontStack = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
+  const bracketRe = () => /[【「〖〈〔（][^【「〖〈〔（）」〗〉〕】]{1,10}[】」〗〉〕）]/g;
+
+  ctx.font = fontSize + 'px ' + fontStack;
+  const lines = wrapTextLines(ctx, cleanText, canvasWidth - padding * 2);
+
+  let totalHeight = padding;
+  for (const l of lines) totalHeight += l === null ? Math.round(lineHeight * 0.6) : lineHeight;
+  totalHeight += padding + tsFontSize + 16;
+
+  canvas.width = canvasWidth;
+  canvas.height = Math.max(totalHeight, 200);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Render text with bracket markers highlighted
+  ctx.font = fontSize + 'px ' + fontStack;
+  ctx.textBaseline = 'top';
+  let y = padding;
+  for (const line of lines) {
+    if (line === null) { y += Math.round(lineHeight * 0.6); continue; }
+    let curX = padding;
+    let lastIdx = 0;
+    const re = bracketRe();
+    let match;
+    while ((match = re.exec(line)) !== null) {
+      if (match.index > lastIdx) {
+        ctx.fillStyle = '#1a1a1a';
+        const t = line.slice(lastIdx, match.index);
+        ctx.fillText(t, curX, y);
+        curX += ctx.measureText(t).width;
+      }
+      const mw = ctx.measureText(match[0]).width;
+      ctx.fillStyle = '#fce4e4';
+      ctx.fillRect(curX - 1, y - 1, mw + 2, lineHeight - 3);
+      ctx.fillStyle = '#c0392b';
+      ctx.fillText(match[0], curX, y);
+      curX += mw;
+      lastIdx = match.index + match[0].length;
+    }
+    if (lastIdx < line.length) {
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillText(line.slice(lastIdx), curX, y);
+    }
+    y += lineHeight;
+  }
+
+  // Timestamp
+  const now = new Date();
+  const p2 = n => String(n).padStart(2, '0');
+  const ts = `生成时间：${now.getFullYear()}-${p2(now.getMonth()+1)}-${p2(now.getDate())} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
+  ctx.font = tsFontSize + 'px ' + fontStack;
+  ctx.fillStyle = '#aaaaaa';
+  ctx.fillText(ts, padding, canvas.height - padding + 4);
+
+  // Diagonal watermark overlay
+  const wmFontSize = Math.round(fontSize * 2.2);
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = '#cc3333';
+  ctx.font = 'bold ' + wmFontSize + 'px ' + fontStack;
+  const wmWidth = ctx.measureText(identity).width;
+  const stepX = wmWidth + wmFontSize * 2.5;
+  const stepY = wmFontSize * 3.2;
+  const halfDiag = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height) / 2 + stepX;
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(-Math.PI / 6);
+  const rows = Math.ceil(halfDiag / stepY);
+  const cols = Math.ceil(halfDiag / stepX) + 1;
+  for (let row = -rows; row <= rows; row++) {
+    const offset = row % 2 === 0 ? 0 : stepX / 2;
+    for (let col = -cols; col <= cols; col++) {
+      ctx.fillText(identity, col * stepX + offset, row * stepY);
+    }
+  }
+  ctx.restore();
+
+  const dateStr = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}`;
+  const link = document.createElement('a');
+  link.download = `存证_${identity}_${dateStr}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function useWatermarkResult() {
+  if (window._lastPlainResult) {
+    document.getElementById('img-text').value = window._lastPlainResult;
+    showToast('已填入水印结果');
+  } else {
+    showToast('请先在"加水印"标签页生成水印文本');
+  }
+}
+
+function wrapTextLines(ctx, text, maxWidth) {
+  const lines = [];
+  for (const para of text.split('\n')) {
+    if (lines.length > 0) lines.push(null); // paragraph break
+    if (!para.trim()) continue;
+    let cur = '';
+    for (const ch of para) {
+      const test = cur + ch;
+      if (ctx.measureText(test).width > maxWidth && cur !== '') {
+        lines.push(cur);
+        cur = ch;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) lines.push(cur);
+  }
+  return lines;
+}
+
+function generateImage() {
+  const text = document.getElementById('img-text').value.trim();
+  if (!text) { showToast('请输入文本内容'); return; }
+
+  let wmText = document.getElementById('img-wm-text').value.trim();
+  if (!wmText) wmText = document.getElementById('identity').value.trim() || '水印';
+
+  const wmColor = document.getElementById('img-wm-color').value;
+  const wmOpacity = parseFloat(document.getElementById('img-wm-opacity').value);
+  const fontSize = parseInt(document.getElementById('img-font-size').value);
+
+  const canvas = document.getElementById('img-canvas');
+  const ctx = canvas.getContext('2d');
+  const canvasWidth = 750;
+  const padding = 44;
+  const lineHeight = Math.round(fontSize * 1.9);
+  const contentWidth = canvasWidth - padding * 2;
+  const fontStack = '"PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif';
+
+  ctx.font = fontSize + 'px ' + fontStack;
+  const lines = wrapTextLines(ctx, text, contentWidth);
+
+  let totalHeight = padding;
+  for (const l of lines) totalHeight += l === null ? Math.round(lineHeight * 0.6) : lineHeight;
+  totalHeight += padding;
+
+  canvas.width = canvasWidth;
+  canvas.height = Math.max(totalHeight, 200);
+
+  // Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Text
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = fontSize + 'px ' + fontStack;
+  ctx.textBaseline = 'top';
+  let y = padding;
+  for (const line of lines) {
+    if (line === null) { y += Math.round(lineHeight * 0.6); continue; }
+    ctx.fillText(line, padding, y);
+    y += lineHeight;
+  }
+
+  // Watermark overlay
+  const wmFontSize = Math.round(fontSize * 2.2);
+  ctx.save();
+  ctx.globalAlpha = wmOpacity;
+  ctx.fillStyle = wmColor;
+  ctx.font = 'bold ' + wmFontSize + 'px ' + fontStack;
+
+  const wmWidth = ctx.measureText(wmText).width;
+  const stepX = wmWidth + wmFontSize * 2.5;
+  const stepY = wmFontSize * 3.2;
+  const halfDiag = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height) / 2 + stepX;
+
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(-Math.PI / 6);
+
+  const rows = Math.ceil(halfDiag / stepY);
+  const cols = Math.ceil(halfDiag / stepX) + 1;
+  for (let row = -rows; row <= rows; row++) {
+    const offset = row % 2 === 0 ? 0 : stepX / 2;
+    for (let col = -cols; col <= cols; col++) {
+      ctx.fillText(wmText, col * stepX + offset, row * stepY);
+    }
+  }
+  ctx.restore();
+
+  document.getElementById('img-result-section').style.display = 'block';
+}
+
+function downloadImage() {
+  const canvas = document.getElementById('img-canvas');
+  const link = document.createElement('a');
+  link.download = '水印图片.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('wm_identity');
+  if (saved) document.getElementById('identity').value = saved;
+
+  const restoreSelect = (id, key) => {
+    const v = localStorage.getItem(key);
+    if (v) document.getElementById(id).value = v;
+  };
+  restoreSelect('bracket-style', 'wm_bracket_style');
+  restoreSelect('density', 'wm_density');
+  const savedDecoy = localStorage.getItem('wm_decoy_count');
+  if (savedDecoy && parseInt(savedDecoy) >= 5) document.getElementById('decoy-count').value = savedDecoy;
+  restoreSelect('add-footer', 'wm_add_footer');
+  const savedCustom = localStorage.getItem('wm_custom_lines');
+  if (savedCustom) document.getElementById('custom-lines').value = savedCustom;
+
+  document.querySelectorAll('textarea').forEach(ta => autoResize(ta));
+});
+</script>
+</body>
+</html>
