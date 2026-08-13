@@ -1,45 +1,52 @@
-# robots.txt — canadaxfx.github.io/text-watermark
-# © 2026 CanadaXFX. All Rights Reserved.
-# This content is NOT licensed for AI training data collection.
-
-# OpenAI
+# Block AI training crawlers
 User-agent: GPTBot
 Disallow: /
 
-# Common Crawl (used by many LLM training datasets)
-User-agent: CCBot
+User-agent: ChatGPT-User
 Disallow: /
 
-# Google AI training
-User-agent: Google-Extended
+User-agent: ClaudeBot
 Disallow: /
 
-# Anthropic
-User-agent: anthropic-ai
-Disallow: /
 User-agent: Claude-Web
 Disallow: /
 
-# Apple
-User-agent: Applebot-Extended
+User-agent: anthropic-ai
 Disallow: /
 
-# Meta
-User-agent: FacebookBot
+User-agent: CCBot
 Disallow: /
 
-# Bytedance
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
 User-agent: Bytespider
 Disallow: /
 
-# Amazon
-User-agent: Amazonbot
+User-agent: Applebot-Extended
 Disallow: /
 
-# Cohere
+User-agent: Diffbot
+Disallow: /
+
+User-agent: ImagesiftBot
+Disallow: /
+
 User-agent: cohere-ai
 Disallow: /
 
-# Allow all other crawlers (search engines etc.)
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: YouBot
+Disallow: /
+
+# Allow all other crawlers
 User-agent: *
 Allow: /
